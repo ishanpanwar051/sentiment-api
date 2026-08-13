@@ -23,6 +23,11 @@ env/
 # Logs
 *.log
 
+# Screenshots
+*.png
+*.jpg
+*.jpeg
+
 # OS
 .DS_Store
 Thumbs.db
