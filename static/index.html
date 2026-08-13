@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sentiment Analyzer</title>
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-brand">
+            <span class="nav-logo">🎯</span>
+            <div class="nav-title-group">
+                <h1 class="nav-title">Sentiment Analyzer</h1>
+                <span class="nav-subtitle">Text + Live Camera Analysis</span>
+            </div>
+            <span class="status-badge" id="statusBadge">
+                <span class="status-dot"></span>
+                Connected
+            </span>
+        </div>
+        <div class="nav-actions">
+            <button class="theme-toggle" id="themeToggle" title="Toggle theme">🌙</button>
+            <a href="https://github.com" target="_blank" class="gh-link" title="View on GitHub">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+            </a>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="analyze">
+                <span class="tab-icon">🔍</span>
+                <span class="tab-label">Analyze</span>
+            </button>
+            <button class="tab-btn" data-tab="batch">
+                <span class="tab-icon">📚</span>
+                <span class="tab-label">Batch</span>
+            </button>
+            <button class="tab-btn" data-tab="dashboard">
+                <span class="tab-icon">📊</span>
+                <span class="tab-label">Dashboard</span>
+            </button>
+            <button class="tab-btn" data-tab="image">
+                <span class="tab-icon">📷</span>
+                <span class="tab-label">Camera</span>
+            </button>
+            <button class="tab-btn" data-tab="history">
+                <span class="tab-icon">⏱️</span>
+                <span class="tab-label">History</span>
+            </button>
+            <button class="tab-btn" data-tab="compare">
+                <span class="tab-icon">⚖️</span>
+                <span class="tab-label">Compare</span>
+            </button>
+            <button class="tab-btn" data-tab="trends">
+                <span class="tab-icon">📈</span>
+                <span class="tab-label">Trends</span>
+            </button>
+        </div>
+
+        <!-- Tab: Analyze -->
+        <section class="tab-content active" id="tab-analyze">
+            <div class="card input-card">
+                <h2 class="card-title">Enter Text</h2>
+                <p class="card-desc">Type or paste a sentence to analyze its sentiment</p>
+                <div class="input-group">
+                    <textarea
+                        id="inputText"
+                        class="text-input"
+                        placeholder="e.g., I absolutely love this product! It's amazing!"
+                        rows="4"
+                        maxlength="2000"
+                    ></textarea>
+                    <div class="input-footer">
+                        <span class="char-count"><span id="charCount">0</span> / 2000</span>
+                        <div class="samples">
+                            <button class="sample-btn" data-sample="I love this product! It's absolutely amazing!">😊 Happy</button>
+                            <button class="sample-btn" data-sample="This is the worst service I've ever experienced.">😠 Angry</button>
+                            <button class="sample-btn" data-sample="The movie was okay, nothing special.">😐 Neutral</button>
+                        </div>
+                    </div>
+                </div>
+                <button class="btn btn-primary" id="analyzeBtn">
+                    <span class="btn-icon">🔬</span>
+                    <span class="btn-text">Analyze Sentiment</span>
+                    <span class="spinner hidden"></span>
+                </button>
+            </div>
+
+            <!-- Results -->
+            <div class="card result-card hidden" id="resultCard">
+                <div class="result-header">
+                    <h2 class="card-title">Result</h2>
+                    <span class="result-badge" id="resultBadge">POSITIVE</span>
+                </div>
+                <div class="result-body">
+                    <div class="result-text">
+                        <span class="result-label">Text:</span>
+                        <p id="resultText" class="result-value"></p>
+                    </div>
+                    <div class="result-metrics">
+                        <div class="metric">
+                            <span class="metric-label">Confidence</span>
+                            <div class="score-bar-container">
+                                <div class="score-bar" id="scoreBar"></div>
+                            </div>
+                            <span class="metric-value" id="scoreValue">0%</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Inference Time</span>
+                            <span class="metric-value" id="inferenceTime">0ms</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Words</span>
+                            <span class="metric-value" id="wordCount">0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Error -->
+            <div class="card error-card hidden" id="errorCard">
+                <div class="error-icon">⚠️</div>
+                <div class="error-content">
+                    <h3 class="error-title">Analysis Failed</h3>
+                    <p class="error-message" id="errorMessage"></p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tab: Batch -->
+        <section class="tab-content" id="tab-batch">
+            <div class="card input-card">
+                <h2 class="card-title">Batch Analysis</h2>
+                <p class="card-desc">Enter multiple texts (one per line) to analyze them at once</p>
+                <div class="input-group">
+                    <textarea
+                        id="batchInput"
+                        class="text-input"
+                        placeholder="I love this product!&#10;This is terrible...&#10;It's okay I guess."
+                        rows="6"
+                    ></textarea>
+                    <div class="input-footer">
+                        <span class="char-count"><span id="batchLineCount">0</span> lines</span>
+                        <button class="sample-btn" id="loadSampleBatch">Load samples</button>
+                    </div>
+                </div>
+                <button class="btn btn-primary" id="batchBtn">
+                    <span class="btn-icon">🚀</span>
+                    <span class="btn-text">Analyze All</span>
+                    <span class="spinner hidden"></span>
+                </button>
+            </div>
+
+            <div class="card hidden" id="batchResultCard">
+                <div class="result-header">
+                    <h2 class="card-title">Batch Results</h2>
+                    <span class="result-badge" id="batchSummary">0 texts</span>
+                </div>
+                <div class="batch-stats">
+                    <span class="batch-stat" id="batchTime">Total: 0ms</span>
+                    <span class="batch-stat" id="batchAvg">Avg: 0ms/text</span>
+                </div>
+                <div class="table-container">
+                    <table class="results-table" id="batchTable">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Text</th>
+                                <th>Sentiment</th>
+                                <th>Score</th>
+                                <th>Time</th>
+                            </tr>
+                        </thead>
+                        <tbody id="batchBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tab: Dashboard -->
+        <section class="tab-content" id="tab-dashboard">
+            <div class="dashboard-grid">
+                <div class="card dashboard-card">
+                    <div class="card-header">
+                        <span class="card-icon">🤖</span>
+                        <h2 class="card-title">Model Info</h2>
+                    </div>
+                    <div class="card-body" id="modelInfo">
+                        <div class="info-row"><span class="info-label">Model</span><span class="info-value skeleton" id="infoModel">-</span></div>
+                        <div class="info-row"><span class="info-label">Device</span><span class="info-value skeleton" id="infoDevice">-</span></div>
+                        <div class="info-row"><span class="info-label">Status</span><span class="info-value skeleton" id="infoStatus">-</span></div>
+                    </div>
+                </div>
+                <div class="card dashboard-card">
+                    <div class="card-header">
+                        <span class="card-icon">💾</span>
+                        <h2 class="card-title">Cache Stats</h2>
+                    </div>
+                    <div class="card-body" id="cacheInfo">
+                        <div class="info-row"><span class="info-label">Entries</span><span class="info-value skeleton" id="cacheSize">-</span></div>
+                        <div class="info-row"><span class="info-label">Max Size</span><span class="info-value skeleton" id="cacheMax">-</span></div>
+                        <div class="info-row"><span class="info-label">Hit Rate</span><span class="info-value skeleton" id="cacheHitRate">-</span></div>
+                    </div>
+                </div>
+                <div class="card dashboard-card">
+                    <div class="card-header">
+                        <span class="card-icon">📈</span>
+                        <h2 class="card-title">Usage Stats</h2>
+                    </div>
+                    <div class="card-body" id="usageInfo">
+                        <div class="info-row"><span class="info-label">Uptime</span><span class="info-value skeleton" id="statsUptime">-</span></div>
+                        <div class="info-row"><span class="info-label">Analyses</span><span class="info-value skeleton" id="statsAnalyses">-</span></div>
+                        <div class="info-row"><span class="info-label">API Version</span><span class="info-value" id="statsVersion">2.0.0</span></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tab: Image (Upload + Live Camera) -->
+        <section class="tab-content" id="tab-image">
+            <!-- Image Upload -->
+            <div class="card">
+                <h2 class="card-title">Upload Image</h2>
+                <p class="card-desc">Upload an image to analyze sentiment from text (OCR) and facial expressions</p>
+                <div class="input-group">
+                    <div class="file-upload-area" id="fileUploadArea">
+                        <input type="file" id="imageInput" accept="image/jpeg,image/png,image/webp,image/bmp" class="file-input" />
+                        <div class="file-upload-placeholder">
+                            <span class="upload-icon">📁</span>
+                            <span class="upload-text">Drop an image or click to browse</span>
+                            <span class="upload-hint">JPEG, PNG, WebP, BMP (max 10MB)</span>
+                        </div>
+                        <div class="file-preview hidden" id="filePreview">
+                            <img id="previewImg" class="preview-image" alt="Preview" />
+                            <span class="file-name" id="fileName"></span>
+                        </div>
+                    </div>
+                </div>
+                <button class="btn btn-primary" id="analyzeImageBtn" disabled>
+                    <span class="btn-icon">🔬</span>
+                    <span class="btn-text">Analyze Image</span>
+                    <span class="spinner hidden"></span>
+                </button>
+            </div>
+
+            <!-- Image Results -->
+            <div class="card hidden" id="imageResultCard">
+                <div class="card-header">
+                    <span class="card-icon">📊</span>
+                    <h2 class="card-title">Image Analysis Result</h2>
+                </div>
+                <div class="image-result-grid" id="imageResultBody"></div>
+            </div>
+
+            <!-- Live Camera -->
+            <div class="card">
+                <h2 class="card-title">Live Camera Sentiment</h2>
+                <p class="card-desc">Open your webcam to see real-time emotion detection — smile = happy, frown = sad</p>
+
+                <div class="camera-container">
+                    <video id="webcam" class="camera-feed" autoplay playsinline muted></video>
+                    <canvas id="cameraCanvas" class="hidden"></canvas>
+
+                    <!-- Emotion overlay on video -->
+                    <div id="cameraOverlay" class="camera-overlay hidden">
+                        <div class="overlay-emotion" id="overlayEmotion">😊</div>
+                        <div class="overlay-label" id="overlayLabel">HAPPY</div>
+                        <div class="overlay-confidence" id="overlayConfidence">98%</div>
+                    </div>
+
+                    <!-- No face / loading -->
+                    <div id="cameraStatus" class="camera-status">
+                        <span id="cameraStatusText">Camera off</span>
+                    </div>
+                </div>
+
+                <div class="camera-controls">
+                    <button class="btn btn-primary" id="startCameraBtn">
+                        <span class="btn-icon">📷</span>
+                        <span class="btn-text">Start Camera</span>
+                    </button>
+                    <button class="btn btn-secondary hidden" id="stopCameraBtn">
+                        <span class="btn-icon">⏹</span>
+                        <span class="btn-text">Stop Camera</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Live emotion breakdown -->
+            <div class="card hidden" id="liveStatsCard">
+                <div class="card-header">
+                    <span class="card-icon">📊</span>
+                    <h2 class="card-title">Live Statistics</h2>
+                </div>
+                <div class="live-stats-grid">
+                    <div class="live-stat">
+                        <span class="live-stat-label">Current Emotion</span>
+                        <span class="live-stat-value" id="liveEmotion">—</span>
+                    </div>
+                    <div class="live-stat">
+                        <span class="live-stat-label">Sentiment</span>
+                        <span class="live-stat-value" id="liveSentiment">—</span>
+                    </div>
+                    <div class="live-stat">
+                        <span class="live-stat-label">Confidence</span>
+                        <span class="live-stat-value" id="liveConfidence">—</span>
+                    </div>
+                    <div class="live-stat">
+                        <span class="live-stat-label">Faces Detected</span>
+                        <span class="live-stat-value" id="liveFaces">—</span>
+                    </div>
+                </div>
+                <div class="emotion-timeline" id="emotionTimeline"></div>
+            </div>
+
+            <div class="card error-card hidden" id="cameraErrorCard">
+                <div class="error-icon">⚠️</div>
+                <div class="error-content">
+                    <h3 class="error-title">Camera Error</h3>
+                    <p class="error-message" id="cameraErrorMessage"></p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tab: Compare -->
+        <section class="tab-content" id="tab-compare">
+            <div class="card">
+                <h2 class="card-title">⚖️ Compare Sentiments</h2>
+                <p class="card-desc">Analyze two texts side by side and see which has a stronger sentiment</p>
+                <div class="compare-grid">
+                    <div class="compare-col">
+                        <h3 class="compare-col-title">Text A</h3>
+                        <div class="input-group">
+                            <textarea id="compareInputA" class="text-input" rows="3" placeholder="I absolutely love this!" maxlength="2000"></textarea>
+                            <div class="input-footer">
+                                <span class="char-count"><span id="compareCountA">0</span> / 2000</span>
+                                <button class="sample-btn" data-compare-a="This product exceeded all my expectations!">😊 Happy</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="compare-vs">
+                        <span class="vs-badge">VS</span>
+                    </div>
+                    <div class="compare-col">
+                        <h3 class="compare-col-title">Text B</h3>
+                        <div class="input-group">
+                            <textarea id="compareInputB" class="text-input" rows="3" placeholder="This is terrible..." maxlength="2000"></textarea>
+                            <div class="input-footer">
+                                <span class="char-count"><span id="compareCountB">0</span> / 2000</span>
+                                <button class="sample-btn" data-compare-b="Very disappointed with the quality.">😠 Angry</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <button class="btn btn-primary" id="compareBtn">
+                    <span class="btn-icon">⚖️</span>
+                    <span class="btn-text">Compare Sentiments</span>
+                    <span class="spinner hidden"></span>
+                </button>
+            </div>
+
+            <!-- Compare Results -->
+            <div class="card hidden" id="compareResultCard">
+                <h2 class="card-title">Comparison Results</h2>
+                <div class="compare-result-grid" id="compareResultBody"></div>
+                <div class="compare-winner hidden" id="compareWinner">
+                    <div class="winner-badge">🏆</div>
+                    <div class="winner-text" id="winnerText"></div>
+                </div>
+                <div class="compare-chart-container">
+                    <canvas id="compareChart" height="200"></canvas>
+                </div>
+            </div>
+
+            <div class="card error-card hidden" id="compareErrorCard">
+                <div class="error-icon">⚠️</div>
+                <div class="error-content">
+                    <h3 class="error-title">Comparison Failed</h3>
+                    <p class="error-message" id="compareErrorMessage"></p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tab: Trends -->
+        <section class="tab-content" id="tab-trends">
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-icon">📊</span>
+                    <h2 class="card-title">Sentiment Overview</h2>
+                </div>
+                <div class="trends-summary" id="trendsSummary">
+                    <div class="trend-stat"><span class="trend-stat-label">Total</span><span class="trend-stat-value" id="trendTotal">—</span></div>
+                    <div class="trend-stat"><span class="trend-stat-label">Positive</span><span class="trend-stat-value positive" id="trendPositive">—</span></div>
+                    <div class="trend-stat"><span class="trend-stat-label">Negative</span><span class="trend-stat-value negative" id="trendNegative">—</span></div>
+                    <div class="trend-stat"><span class="trend-stat-label">Avg Score</span><span class="trend-stat-value" id="trendAvgScore">—</span></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-icon">🥧</span>
+                    <h2 class="card-title">Sentiment Distribution</h2>
+                </div>
+                <div class="chart-container">
+                    <canvas id="distributionChart" height="260"></canvas>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-icon">📈</span>
+                    <h2 class="card-title">Sentiment Timeline</h2>
+                </div>
+                <p class="card-desc">How sentiment scores have changed over recent analyses</p>
+                <div class="chart-container">
+                    <canvas id="timelineChart" height="260"></canvas>
+                </div>
+            </div>
+
+            <div class="card error-card hidden" id="trendsErrorCard">
+                <div class="error-icon">⚠️</div>
+                <div class="error-content">
+                    <h3 class="error-title">Failed to Load Trends</h3>
+                    <p class="error-message" id="trendsErrorMessage"></p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tab: History -->
+        <section class="tab-content" id="tab-history">
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-icon">⏱️</span>
+                    <h2 class="card-title">Recent Analyses</h2>
+                </div>
+                <div class="table-container">
+                    <table class="results-table">
+                        <thead>
+                            <tr>
+                                <th>Text</th>
+                                <th>Sentiment</th>
+                                <th>Score</th>
+                                <th>Time</th>
+                                <th>When</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyBody">
+                            <tr id="historyEmpty">
+                                <td colspan="5" class="empty-state">
+                                    <span class="empty-icon">📭</span>
+                                    <span>No analyses yet. Try analyzing some text!</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <button class="btn btn-secondary hidden" id="clearHistoryBtn">
+                    <span>🗑️ Clear History</span>
+                </button>
+            </div>
+        </section>
+    </main>
+
+    <!-- Toast -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
